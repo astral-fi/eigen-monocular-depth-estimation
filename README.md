@@ -6,6 +6,9 @@ This repository implements a **monocular depth estimation pipeline** inspired by
 The project reproduces the **core coarse-to-fine learning paradigm** using a **modern fully convolutional architecture**, trained and evaluated on the **KITTI dataset** with sparse LiDAR depth supervision.
 https://arxiv.org/pdf/1406.2283
 
+
+![Qualitative Results](result.png)
+
 ---
 
 ## Motivation
