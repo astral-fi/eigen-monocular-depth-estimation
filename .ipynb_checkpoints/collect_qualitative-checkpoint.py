@@ -42,28 +42,42 @@ fine = FineDepthNet().to(DEVICE)
 fine.load_state_dict(torch.load("./checkpoints/fine_epoch_10.pth"))
 fine.eval()
 
+
+
 dataset = Dataset("./data/")
+indices = list(range(len(dataset)))
+val_indices = indices[:100]   # take first 100 as validation
+dataset = Subset(dataset, val_indices)
 
-import random
-random.seed()  # remove seed for true randomness
+dataloader = DataLoader(
+    dataset,
+    batch_size=BATCH_SIZE,
+    shuffle=True,
+    num_workers=4,
+    pin_memory=True
+)
 
-sample_indices = random.sample(range(len(dataset)), NUM_SAMPLES)
-fig, axes = plt.subplots(NUM_SAMPLES, 4, figsize=(16, 18))
+fig, axes = plt.subplots(5, 4, figsize=(16, 18))
 
 with torch.no_grad():
-    for row, idx in enumerate(sample_indices):
-        sample = dataset[idx]
 
-        input_img = sample["image"].unsqueeze(0).to(DEVICE)
-        gt = sample["depth"]
+    row = 0
 
+    for batch in tqdm(dataloader):
+        if row >= NUM_SAMPLES:
+            break
+
+        input_img = batch["image"].to(DEVICE)   # [B, C, H, W]
+        gt = batch["depth"].to(DEVICE)              # [B, H, W] or [B, 1, H, W]
+        
         coarse_pred = coarse(input_img)
         fine_pred = fine(input_img, coarse_pred)
 
-        inp = input_img[0].permute(1, 2, 0)
-        gt_ = gt.squeeze()
+        inp = input_img[0].permute(1, 2, 0)      # HWC
+        gt_ = gt[0].squeeze()
         coarse_pred_ = coarse_pred[0].squeeze()
         fine_pred_ = fine_pred[0].squeeze()
+
 
         inp = normalize_to_uint8(inp)
         gt_ = normalize_to_uint8(gt_)
@@ -86,6 +100,7 @@ with torch.no_grad():
         axes[row, 3].set_title("Fine")
         axes[row, 3].axis("off")
 
+        row += 1
 plt.tight_layout()
 plt.savefig("result.png", dpi=200)
 plt.show()
