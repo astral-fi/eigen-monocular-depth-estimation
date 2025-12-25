@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 SAVE_ROOT = "results/qualitative"
 NUM_SAMPLES = 5   # number of qualitative samples to save
-BATCH_SIZE = 1
+BATCH_SIZE = 5
 os.makedirs(SAVE_ROOT, exist_ok=True)
 
 def normalize_to_uint8(x):
@@ -52,7 +52,7 @@ dataset = Subset(dataset, val_indices)
 dataloader = DataLoader(
     dataset,
     batch_size=BATCH_SIZE,
-    shuffle=False,
+    shuffle=True,
     num_workers=4,
     pin_memory=True
 )
