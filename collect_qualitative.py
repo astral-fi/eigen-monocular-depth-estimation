@@ -4,6 +4,8 @@ from torch.utils.data import DataLoader, Subset
 import cv2
 import numpy as np
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 SAVE_ROOT = "results/qualitative"
@@ -55,11 +57,14 @@ dataloader = DataLoader(
     pin_memory=True
 )
 
+fig, axes = plt.subplots(5, 4, figsize=(16, 18))
+
 with torch.no_grad():
-    sample_idx = 0
+
+    row = 0
 
     for batch in tqdm(dataloader):
-        if sample_idx >= NUM_SAMPLES:
+        if row >= NUM_SAMPLES:
             break
 
         input_img = batch["image"].to(DEVICE)   # [B, C, H, W]
@@ -79,15 +84,25 @@ with torch.no_grad():
         coarse_pred_ = normalize_to_uint8(coarse_pred_)
         fine_pred_ = normalize_to_uint8(fine_pred_)
 
-        sample_dir = os.path.join(SAVE_ROOT, f"sample_{sample_idx:02d}")
-        os.makedirs(sample_dir, exist_ok=True)
+        axes[row, 0].imshow(inp)
+        axes[row, 0].set_title("RGB")
+        axes[row, 0].axis("off")
 
-        save_image(os.path.join(sample_dir, "input.png"), inp)
-        save_image(os.path.join(sample_dir, "gt.png"), gt_)
-        save_image(os.path.join(sample_dir, "coarse_prediction.png"), coarse_pred_)
-        save_image(os.path.join(sample_dir, "fine_prediction.png"), fine_pred_)
+        axes[row, 1].imshow(gt_, cmap="plasma")
+        axes[row, 1].set_title("GT Depth")
+        axes[row, 1].axis("off")
 
-        sample_idx += 1
+        axes[row, 2].imshow(coarse_pred_, cmap="plasma")
+        axes[row, 2].set_title("Coarse")
+        axes[row, 2].axis("off")
 
-print("Qualitative results saved to:", SAVE_ROOT)
+        axes[row, 3].imshow(fine_pred_, cmap="plasma")
+        axes[row, 3].set_title("Fine")
+        axes[row, 3].axis("off")
+
+        row += 1
+plt.tight_layout()
+plt.savefig("result.png", dpi=200)
+plt.show()
+
 
